@@ -1,0 +1,295 @@
+配置梳理
+
+server:
+  port: 8004
+  context-path: /
+  max-http-header-size: 8192
+  tomcat:
+    accept-count: 2000
+    max-connections: 30000
+    max-threads: 2000
+    uri-encoding: UTF-8
+    min-spare-threads: 200
+    basedir: /data/logs/temp  
+    accesslog:
+      directory: /data/logs/
+      enabled: false
+hystrix:
+  #202019新增
+  threadpool:
+    default:
+      coreSize: 500
+  command:
+    default:
+      execution:
+        isolation:
+          thread:
+            timeoutInMilliseconds: 2000
+    OutUrlClient#stop(String):
+      execution:
+        isolation:
+          thread:
+            timeoutInMilliseconds: 10000
+
+  
+ribbon:
+  MaxTotalHttpConnections: 4000
+  MaxConnectionsPerHost: 500
+  # 读取超时时间
+  ReadTimeout: 60000
+  # 连接超时时间
+  ConnectTimeout: 60000
+  # 同一实例最大重试次数，不包括首次调用。默认值为0
+  MaxAutoRetries: 0
+  # 同一个微服务其他实例的最大重试次数，不包括第一次调用的实例。默认值为1
+  MaxAutoRetriesNextServer: 0
+  # 是否所有操作（GET、POST等）都允许重试。默认值为false
+  OkToRetryOnAllOperations: false
+feign:
+  hystrix:
+    enabled: true
+  httpclient:
+    enabled: true
+    #最大连接数
+    max-connections: 4000
+    #单实例最大连接数
+    max-connections-per-route: 500
+    time-to-live: 120
+    time-to-live-unit: seconds
+    connection-timeout: 500
+    socket-timeout: 2000
+  compression:
+    request:
+      min-request-size: 10
+      mime-types:
+      - text/xml
+      - application/xml
+      - application/json
+      enabled: true
+    response:
+      enabled: true
+
+spring:
+  cluster:
+    pool:
+      lifo: false
+      maxIdel: 8
+      maxTotal: 50
+      maxWaitMillis: 1000
+      minEvictableIdleTimeMillis: 1800000
+      minIdel: 0
+      softMinEvictableIdleTimeMillis: 1800000
+  http:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 11MB
+  datasource:
+    # 指定数据源名
+    name: live-management
+    driverClassName: com.mysql.jdbc.Driver
+    url: jdbc:mysql://zbzt.mysql.db.migu:55944/zbztdb?useUnicode=true&characterEncoding=utf-8&useSSL=false&allowMultiQueries=true&socketTimeout=60000&autoReconnect=true&failOverReadOnly=false
+    # mysql服务连接用户名
+    username: m_zbzt 
+    # mysql服务连接密码
+    password: rTq7SMMPdnaDS0PVv9pa
+    # mysql指定初始化数据源，是否用data.sql来初始化，默认: true
+    initialize: true
+    # mysql指定schema要使用的Platform(schema-${platform}.sql)，默认为: all
+    platform: mysql
+    # mysql服务初始化时建立物理连接的个数
+    initialSize: 20
+    # mysql最小连接池数量
+    minIdle: 20
+    # mysql最大连接数，不足会创建，目的是为了防止一下子新建很多连接造成超时
+    maxActive: 300
+    # 配置获取连接等待超时的时间
+    maxWait: 60000
+    # 配置间隔多久才进行一次检测，检测需要关闭的空闲连接，单位是毫秒
+    timeBetweenEvictionRunsMillis: 60000
+    # 配置一个连接在池中最小生存的时间，单位是毫秒
+    minEvictableIdleTimeMillis: 30000
+    # mysql服务用来检测连接是否有效的sql，要求是一个查询语句，常用select 'x'。
+    validationQuery: select 1 from dual
+    # 单位：秒，检测连接是否有效的超时时间。底层调用jdbc Statement对象的void setQueryTimeout(int seconds)方法
+    validationQueryTimeout: 100
+    #建议配置为true，不影响性能，并且保证安全性。申请连接的时候检测，如果空闲时间大于timeBetweenEvictionRunsMillis，执行validationQuery检测连接是否有效。
+    testWhileIdle: true
+    # 申请连接时执行validationQuery检测连接是否有效，做了这个配置会降低性能。
+    testOnBorrow: false
+    # 归还连接时执行validationQuery检测连接是否有效，做了这个配置会降低性能。
+    testOnReturn: false
+    # 是否缓存preparedStatement，也就是PSCache。PSCache对支持游标的数据库性能提升巨大，比如说oracle。在mysql下建议关闭。
+    poolPreparedStatements: true
+    # 要启用PSCache，必须配置大于0，当大于0时，poolPreparedStatements自动触发修改为true。在Druid中，不会存在Oracle下PSCache占用内存过多的问题，可以把这个数值配置大一些，比如说100
+    maxPoolPreparedStatementPerConnectionSize: 100
+    # 配置监控统计拦截的filters，去掉后监控界面sql无法统计，'wall'用于防火墙
+    filters: stat,wall,log4j
+    # 通过connectProperties属性来打开mergeSql功能；慢SQL记录
+    connectionProperties: druid.stat.mergeSql=true;druid.stat.slowSqlMillis=5000
+  task:
+    pool:
+      corePoolSize: 16
+      maxPoolSize: 32
+      keepAliveSeconds: 3000
+      queueCapacity: 200
+    
+  kafka:
+    producer:
+      bootstrap-servers:
+      - 10.150.25.25:9092
+      - 10.150.25.23:9092
+      - 10.150.25.180:9092
+      - 10.150.25.182:9092
+      - 10.150.25.178:9092
+    listener:
+      concurrency: 1
+    # 合并多个DruidDataSource的监控数据
+    useGlobalDataSourceStat: true      
+  data:
+    mongodb:
+      # MongoDB服务地址
+      host: 106.15.50.129
+      # MongoDB服务连接端口
+      port: 27017
+      # MongoDB数据库名
+      database: demo
+      # MongoDB服务连接用户名
+      username: test
+      # MongoDB服务连接密码
+      password: root
+      # 连接池大小
+      connections-per-host: 800
+      # 最小连接池大小
+      min-connections-per-host: 5
+      maxConnectionIdleTime: 150000
+      maxConnectionLifeTime: 150000
+      connectTimeout: 500
+      socketTimeout: 2000
+  redis:
+    # Redis数据库索引（默认为0）
+    database: 0
+    # Redis服务器连接密码（默认为空）
+    password: root
+    # Redis服务器地址
+    host: 106.15.50.129
+    # Redis服务器连接端口
+    port: 6379
+    jedis:
+      pool:
+        # 连接池最大连接数（使用负值表示没有限制）
+        max-active: 8
+        # 连接池最大阻塞等待时间（使用负值表示没有限制）
+        max-wait: -1
+        # 连接池中的最大空闲连接
+        max-idle: 8
+        # 连接池中的最小空闲连接
+        min-idle: 0
+  rabbitmq:
+    addresses: 10.186.54.190:5672,10.186.54.191:5672,10.186.54.233:5672
+    password:  3edc#EDC
+    username:  epu_eventbus
+    virtualHost: /
+    connection-timeout: 3000
+
+management:
+  address: 0.0.0.0
+  context-path: /actuator
+  port: 8888
+  security:
+    enabled: true
+
+#SpringBoot应用监控Actuator
+endpoints:
+  beans:
+    enabled: false
+  dump:
+    enabled: false
+  env:
+    enabled: false
+  health:
+    enabled: true
+    sensitive: true
+  loggers:
+    enabled: false
+  metrics:
+    enabled: true
+  shutdown:
+    enabled: false
+    
+security:
+  verify-code: enable
+  authentication: enable #enable
+  #不需要拦截的路径
+  antMatchers: /api/v1/auth/**,/api/v1/user/**,/zbztManageUser/**,/zbztAnchorExtention/**,/zbztReservation/auditCollect,/zbztReservation/getReservationListForWC,/health/**,/robot/playVideo,/secretBox/**,/zbztChannel/**,/stream/**,/statistics/**,/zbztSchoolAndCode/**,/dashboard/**,/shim/**
+  basic:
+    authorize-mode: role
+    enabled: true
+    path:
+    - /actuator
+  user:
+    name: admin
+    password: EkbpZYEoKso4
+    role:
+    - SUPERUSER
+  jwt:
+    header: Authorization
+    secret-key: mySecret
+    expiration: 43200000
+    bearer-header: "Bearer "
+    refresh-limit-times: 5
+    ahead-time: 1800000
+
+# Spring框架中提供了两种事件监听的方式：
+
+# 编程式：通过实现ApplicationListener接口来监听指定类型的事件
+
+# 注解式：通过在方法上加@EventListener注解的方式监听指定参数类型的事件，写该类需要托管到Spring容器中
+
+# 在SpringBoot应用中还可以通过配置的方式实现监听： 3.通过application.properties中配置context.listener.classes属性指定监听器   
+context:
+  listener:
+    classes: com.migu.zbzt.listener.DataSourceInitializerListener
+    
+
+kafka:
+  send-clear: BIG_DATA_CLEAR_CASHE
+  path-ip: 10.150.28.81:2400,10.150.28.82:2400,10.150.28.85:2400,10.150.28.86:2400,10.150.28.89:2400,10.150.28.90:2400
+
+
+#cachehub相关配置
+grpc:
+  client:
+    # 生产者服务名称(spring.application.name的名称)
+    grpc-server:
+      # 是否开启心跳
+      enableKeepAlive: true
+      # 保持心跳畅通
+      keepAliveWithoutCalls: true
+      #心跳通讯传输类型
+      negotiationType: plaintext
+      # 心跳间隔(秒)
+      keepAliveTime: 20
+      # 心跳超时(秒)
+      keepAliveTimeout: 5
+  timeout: 3000
+  cachehub:
+    # 生产环境ip地址
+    serverhosts: 10.150.59.101:9991,10.150.59.103:9991  # 生产者服务:端口列表，用逗号隔开
+    timeout: 1500   # 调用生产者服务超时时间 
+  remote:
+    taskmanage:
+      monitorMsgNotify: /taskmanage/v1/monitor/msg-notify
+  # 监控消息等待延时，单位：s
+  monitorListen:
+    timeout: 60
+    
+mybatis :
+  mapperLocations: classpath:/mapper/*.xml
+  typeAliasesPackage: com.migu.live.timing.model
+elasticsearch:
+  legao:
+    uris: http://10.150.29.116:9200,http://10.150.29.121:9200
+  contentstatus:
+    uris: http://10.150.25.2:9200 #,http://10.125.148.151:9200
+  index: cloudlive
+  type: contents
