@@ -63,3 +63,21 @@ RPC:
 4.rest是一种架构风格，客户端需要通过url去调用服务端，http本身即是承载协议，也是应用协议
 5.soap适合企业应用，rest更适合高并发场景，soap的 业务状态大多是在维护在服务端的，而rest是无状态的操作，维护的是资源状态，将会话状态交由客户端维护
 ```
+
+### 6.spring项目配置信息优先级
+
+```markdown
+1.spring项目中配置信息格式：
+a.properties文件
+	eg:spring.appilcation.name=test
+b.yml文件
+	eg:spring:
+		application:
+			name: test
+yml格式的文件要比prop格式的文件优先级高，当两个文件中配置了相同配置名的数据时，会优先读取yml格式的配置。
+2.特殊命名规则的配置文件
+bootstrap>application>其他（优先级从大到小）
+3.当项目中引入了配置中心时，会优先加载配置文件中的数据，再去加载配置中心的数据，最后才会读取@value注解配置的默认数据；
+总得来说就是：配置文件>config(apollo,nacos)>@Value.
+```
+

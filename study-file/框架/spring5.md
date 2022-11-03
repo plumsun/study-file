@@ -1,46 +1,78 @@
+
+
 # spring
+
+
+
+
+
+## 1.对spring的了解
 
 -   spring是一个开源免费的框架(容器).
 -   spring是一个轻量级,非入侵式的框架.
 -   控制反转(IOC),面向切面编程(AOP).
 -   支持事务处理,对框架整合的支持.
 
-```markdown
-spring是一个轻量级的控制反转(IOC)和切面编程(AOP)的框架
+```
+Spring首先它是一个开源而轻量级的框架。其核心容器的主要组件是Bean工厂（BeanFactory）。Bean工厂使用控制反转（IOC）模式来降低程序代码之间的耦合度，并提供了面向切面编程（AOP）的实现。
 ```
 
-## 组成
-
-![image-20210116192015990](C:%5CUsers%5CAdmin%5CAppData%5CRoaming%5CTypora%5Ctypora-user-images%5Cimage-20210116192015990.png)
-
-![image-20210116192126180](C:%5CUsers%5CAdmin%5CAppData%5CRoaming%5CTypora%5Ctypora-user-images%5Cimage-20210116192126180.png)
-
--   spring Boot
-    -   一个快速开发的脚手架
-    -   基于springBoot可以快速的开发单个微服务
--   spring Cloud
-    -   SpringCloud是基于SpringBoot实现的
 
 
+## 3.springbean初始化流程
+
+```
+实例化bean对象(通过构造方法或者工厂方法)
+设置对象属性(setter等)（依赖注入）
+如果Bean实现了BeanNameAware接口，工厂调用Bean的setBeanName()方法传递Bean的ID。（和下面的一条均属于检查Aware接口）
+如果Bean实现了BeanFactoryAware接口，工厂调用setBeanFactory()方法传入工厂自身
+将Bean实例传递给Bean的前置处理器的postProcessBeforeInitialization(Object bean, String beanname)方法
+调用Bean的初始化方法
+将Bean实例传递给Bean的后置处理器的postProcessAfterInitialization(Object bean, String beanname)方法
+使用Bean
+容器关闭之前，调用Bean的销毁方法
+```
+
+## 4.springBean的作用域
+
+```properties
+singleton:单例模式
+prototype:多例模式
+request:每次请求共享一个bean
+session:同一个session共享一个bean
+globalSession:全局作用域，作用于容器整个上下文对象
+```
 
 
 
-# IOC
+
+
+## 2.对springIOC和AOP的了解
+
+```markdown
+1. AOP:
+		为面向切面编程，是通过预编译方式和运行期动态代理实现程序功能的统一维护的一种技术。利用AOP可以对业务逻辑的各个部分进行隔离，从而使得业务逻辑各部分之间的耦合度降低，提高程序的可重用性，同时提高了开发的效率。简单来说，就是在不修改原代码码的情况下对方法进行功能增强。
+2. IOC
+		在传统的程序设计中，如果在web层要调用service层的方法，就必须在web层主动创建service层实现类对象，但是在spring中，创建对象的工作不再由调用者主动完成，而是把创建对象的控制权交给spring的bean工厂， 调用者只负责接收这个对象。
+```
+
+
+
+### IOC
 
 ***控制反转:通过spring容器创建bean***
 
 
 
-## 创建bean
+#### 创建bean
 
-### 1.构造方法
+##### 1.构造方法
 
 ```markdown
-class属性指向bean的全限定路径或者实现类的全限定路径
-底层通过反射机制,调用对应bean的构造方法创建指定bean
+class属性指向bean的全限定路径或者实现类的全限定路径，底层通过反射机制,调用对应bean的构造方法创建指定bean
 ```
 
-配置文件
+**配置文件**
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -61,7 +93,7 @@ class属性指向bean的全限定路径或者实现类的全限定路径
 
 
 
-### 2.静态实例工厂
+##### 2.静态实例工厂
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -78,7 +110,7 @@ class属性指向bean的全限定路径或者实现类的全限定路径
 
 
 
-### 3.动态实例工厂
+##### 3.动态实例工厂
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -95,7 +127,7 @@ class属性指向bean的全限定路径或者实现类的全限定路径
 
 
 
-## 基于xml
+##### 基于xml
 
 **解析配置文件API**
 
@@ -106,9 +138,9 @@ class属性指向bean的全限定路径或者实现类的全限定路径
 
 
 
-### bean标签
+##### bean标签
 
-#### 属性
+**属性**
 
 ```markdown
 id:bean的唯一标识
@@ -140,7 +172,7 @@ value:基本类型的属性赋值
 ref:引用类型的属性赋值,来自于spring创建的对象的唯一标识
 ```
 
-#### 生命周期
+**生命周期**
 
 ```markdown
 1.多例
@@ -737,6 +769,43 @@ PlatformTransactionManager:事务管理器
     定义在方法,接口和类上
 @EnableTransactionManagement:开启注解事务
 ```
+
+
+
+##### 事务失效
+
+```
+1.方法权限修饰符不是public
+	a.将方法修饰符改为public
+	b.开启AspectJ代理模式
+2.当前类未被spring管理
+	
+3.当前方法中异常被捕获，但未进行抛出
+4.当前方法抛出的异常类型不符合要求
+	a.使用rollbackfor修改异常类型
+	b.抛出spring支持的异常类型，runtimeException
+5.当前方法未被事务管理，却调用了被事务管理的方法
+6.数据库本身不支持事务
+7.使用this调用其他方法，外层的事务失效
+	a.把两个方法拆开，放到不同类里
+	b.使用自己的实例调用
+	c.通过AopContext.currentProxy()获取代理类调用
+	d.去掉里层方法上的事务注解，放到外层方法上
+```
+
+##### 传播行为
+
+```
+Propagation.NOT_SUPPORTED:放弃事务支持
+```
+
+##### 修改回滚异常
+
+```
+rollbackfor=Exception.class
+```
+
+
 
 
 
