@@ -668,7 +668,7 @@ weaving织入=增强运用到切入点的过程
 				after-returning:后置通知
 		-->
         <!--声明通知(增强)-->
-    	<aop:通知类型 method="增强" pointcut-ref="切入点"></aop:before>
+    	<aop:before method="增强" pointcut-ref="切入点"></aop:before>
     </aop:aspect>
 </aop:congif>
 ```
