@@ -127,24 +127,47 @@ c:controller控制器
 
 
 
-#### 6.2控制器配置
-
-**在web.xml文件中配置前端控制器**
+#### 6.2 web配置
 
 ```xml
 <servlet>
-    <servlet-name>DispatcherServlet</servlet-name>
-    <servlet-class>DispatcherServlet</servlet-class>
-    <!-- 配置springmvc配置文件的位置，用于创建springmvc容器-->
-    <init-param>
-          <param-name>contextConfigLocation</param-name>
-          <param-value>classpath:springmvc.xml</param-value>
-     </init-param>
-</servlet>
-<servlet-mapping>
-	<servlet-name>DispatcherServlet</servlet-name>
-    <url-pattern>/</url-pattern>
-</servlet-mapping>
+        <servlet-name>DispatcherServlet</servlet-name>
+        <servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
+        <!--springmvc配置文件的位置-->
+        <init-param>
+            <param-name>contextConfigLocation</param-name>
+            <param-value>classpath:springmvc/springmvc.xml</param-value>
+        </init-param>
+        <!--启动时加载-->
+        <load-on-startup>1</load-on-startup>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>DispatcherServlet</servlet-name>
+        <url-pattern>/</url-pattern>
+    </servlet-mapping>
+
+    <!--乱码过滤器-->
+    <filter>
+        <filter-name>CharacterEncodingFilter</filter-name>
+        <filter-class>org.springframework.web.filter.CharacterEncodingFilter</filter-class>
+        <init-param>
+            <param-name>encoding</param-name>
+            <param-value>utf-8</param-value>
+        </init-param>
+    </filter>
+    <filter-mapping>
+        <filter-name>CharacterEncodingFilter</filter-name>
+        <url-pattern>/*</url-pattern>
+    </filter-mapping>
+
+    <!-- spring和springmvc整合：将spring容器告知springmvc-->
+    <context-param>
+        <param-name>contextConfigLocation</param-name>
+        <param-value>classpath:spring/applicationContext*.xml</param-value>
+    </context-param>
+    <listener>
+        <listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
+    </listener>
 ```
 
 
