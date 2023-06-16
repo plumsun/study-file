@@ -81,3 +81,228 @@ bootstrap>application>其他（优先级从大到小）
 总得来说就是：配置文件>config(apollo,nacos)>@Value.
 ```
 
+
+
+
+
+
+
+### 7.openfeign使用
+
+feign的配置信息除了一些组件配置外（协议切换，熔断开启，数据压缩...），其余的配置都是分为全局和单量的。主要通过指定的config为准，当指定default时为全局。若是指定clientname，则当前配置只针对对应的client配置有效。
+
+配置信息：
+
+```yml
+#openfeign配置
+feign:
+  circuitbreaker:
+    enabled: true
+  # feign启用hystrix，才能熔断、降级
+  hystrix:
+    enabled: true
+  # 切换okhttp
+  okhttp:
+    enabled: true
+  # 数据压缩
+  compression:
+    request:
+      enabled: true
+      min-request-size: 2048
+      mime-types: text/xml,application/xml,application/json
+    response:
+      enabled: true
+  client:
+    config:
+      default:
+        # 建议生产不要打开
+        loggerLevel: BASIC
+        ConnectTimeOut: 5000
+        ReadTimeOut: 10000
+      #调用system微服务，默认时间设置为30s
+#      systemClient:
+#        ConnectTimeOut: 30000
+#        ReadTimeOut: 30000
+```
+
+> `feign.client.config.default`: 全局配置
+>
+> `feign.client.config.clinetname`: 单个client配置
+
+
+
+引入OKhttp
+
+openfeign默认http协议用httpclient，如果要采用okhttp时，需要引入对应依赖，并修改配置文件。
+
+```yml
+feign:
+  # 切换okhttp
+  okhttp:
+    enabled: true
+```
+
+
+
+拦截器（RequestInterceptor）
+
+```java
+public interface RequestInterceptor {
+
+  /**
+   * Called for every request. Add data using methods on the supplied {@link RequestTemplate}.
+   */
+  void apply(RequestTemplate template);
+}
+```
+
+使用拦截器在feign调用接口时自动添加权限认证头信息。
+
+```java
+//两种方式实现feign拦截器
+//1.实现Interceptor，这种会自动注入到springbean容器中。
+@Configuration
+public class IRequestInterceptor implements RequestInterceptor {
+ 
+    @Override
+    public void apply(RequestTemplate template) {
+        /**
+        RequestTemplate包含了feign经过动态代理后的请求信息。（URL，method，header,serverName）
+        */
+        //添加请求头
+        template.header(hearder);
+    }
+}
+
+//2.手动注入springbean容器
+@Slf4j
+public class FeignConfig {
+
+    @Bean
+    public RequestInterceptor requestInterceptor() {
+        return template -> {
+            AppContext context = AppContext.getContext();
+            if (ObjectUtil.hasEmpty(context.getToken(), context.getValue())) {
+                log.error("feign请求头信息获取失败,当前请求位置:{}", template.url());
+                return;
+            }
+            //添加请求头
+            template.header(context.getToken(), context.getValue());
+        };
+    }
+}
+```
+
+
+
+自定义日志
+
+feign的日志等级为：
+
+- `NONE`（默认）：不记录任何日志;
+- `BASIC`：仅记录请求方法、URL、响应状态代码以及执行时间;
+- `HEADERS`：在BASIC级别的基础上，记录请求和响应的header;
+- `FULL`：记录请求元数据，响应元数据（请求信息，请求体信息，请求体长度，请求头，响应时间，响应体等）。
+
+feign的日志开启有两种：
+
+1.通过配置信息
+
+```yml
+feign:
+  client:
+    config:
+      default:
+        loggerLevel: BASIC
+```
+
+2.通过配置类
+
+```java
+@Slf4j
+public class FeignConfig {
+
+    @Bean
+    Logger.Level logger(){
+        return Logger.Level.FULL; 
+    }
+}
+```
+
+feign的所有日志均为`debug`级别，可能有些日志采集框架会忽略这种日志，导致feign调用信息在链路追踪时不显示。
+
+需要自定义feign日志打印格式，使用`slf4j`框架的日志格式。
+
+```java
+@Slf4j
+public class FeignConfig {
+    
+    //注入spring
+    @Bean
+    FeignLoggerFactory infoFeignLoggerFactory() {
+        return new InfoFeignLoggerFactory();
+    }
+}
+/**
+    自定义日志工厂，注入spring时采用工厂注入
+*/
+class InfoFeignLoggerFactory implements FeignLoggerFactory {
+
+    @Override
+    public feign.Logger create(Class<?> type) {
+        //实际创建日志对象是自定义的日志对象
+        return new InfoFeignLogger();
+    }
+}
+/**
+	自定义日志对象，需要继承feign的日志对象
+*/
+@Slf4j
+class InfoFeignLogger extends feign.Logger {
+
+    /**
+    	重新日志打印方法
+    */
+    
+    //feign请求日志
+    @Override
+    protected void logRequest(String configKey, Level logLevel, Request request) {
+        log.info("---RPC调用开始......");
+        log.info("{}---> Feign Request Msg: {},{} HTTP/1.1", configKey, request.httpMethod().name(), request.url());
+        if (request.requestBody().asBytes() != null) {
+            String bodyText = request.requestBody().asString();
+            log.info("{}---> Feign Request Body: {}", configKey, bodyText);
+        }
+
+    }
+
+	//feign响应日志
+    @Override
+    protected Response logAndRebufferResponse(String configKey, Level logLevel, Response response, long elapsedTime) throws IOException {
+        String reason =
+                response.reason() != null && logLevel.compareTo(Level.NONE) > 0 ? " " + response.reason()
+                        : "";
+        int status = response.status();
+        log.info("{}<--- Feign Response Msg: {}({}), Time: ({}ms)", configKey, status, reason, elapsedTime);
+        if (response.body() != null && !(status == 204 || status == 205)) {
+            // HTTP 204 No Content "...response MUST NOT include a message-body"
+            // HTTP 205 Reset Content "...response MUST NOT include an entity"
+            byte[] bodyData = Util.toByteArray(response.body().asInputStream());
+            if (bodyData.length > 0) {
+                log.info("{}<--- Feign Response Body: {}", configKey, decodeOrDefault(bodyData, UTF_8, "Binary data"));
+            }
+            return response.toBuilder().body(bodyData).build();
+        }
+        return response;
+    }
+    //feign 原生日志打印方法，不要重写，原生的格式个人感觉不怎么样。
+    @Override
+    protected void log(String configKey, String format, Object... args) {
+        // TODO 使用slf4j打印feign
+    }
+}
+```
+
+
+
+> feign的配置创建完毕后，如果没有采用`@Configuration`这种格式，那一定要在`@FeignClient(configuration = FeignConfig.class)`指定配置类，否则不会生效。
