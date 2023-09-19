@@ -1,5 +1,58 @@
 # Linux
 
+## 1.文件系统
+
+```properties
+# 根目录
+/
+# 系统命令文件
+bin:可执行命令,链接文件夹,挂载到/usr/bin
+sbin:系统可执行命令，超级管理员可用命令，挂载到/usr/sbin
+# 系统配置信息
+etc
+data  
+ 
+lib    
+log         
+media  
+opt:   
+root  
+  
+sys    
+var
+boot  
+dev   
+home  
+lib64  
+lost+found  
+mnt    
+proc  
+run   
+srv   
+tmp  
+usr
+```
+
+
+
+
+
+
+
+## 2.网关配置
+
+## 3.系统服务
+
+## 4.运行级别
+
+
+
+
+
+
+
+
+
 ## 1.命令
 
 
