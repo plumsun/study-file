@@ -376,7 +376,6 @@ LinkedBlockingDeque:由链表组成的双向阻塞队列
 SynchronousQueue:一个不存储元素的阻塞队列，每个插入操作必须等到另一个线程调用移除操作，否则插入操作一直处于阻塞状态
 PriorityBlockingQueue:支持优先级排序的无界阻塞队列
 DelayQueue:使用优先级队列实现的延迟无界阻塞队列
-
 ```
 
 ## 8.线程池
