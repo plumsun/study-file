@@ -17,7 +17,7 @@ SQL:
 
 ## 常用的命令
 
-```mysql
+```sql
 #查询表结构
 desc emp;
 
@@ -26,6 +26,9 @@ SELECT database();
 
 #查询当前数据库的版本号
 select version();
+
+# 查询当前MySQL默认存储引擎
+show variables like '%storage_engine%';
 
 #查询其他数据库中的数据表
 show tables from nacos_config;
@@ -358,3 +361,27 @@ explain这个命令来查看一个这些SQL语句的执行计划，查看该SQL�
 
 2.delete删除语句,可以在后跟where过滤条件,来实现删除部分或者指定数据.
   truncate只能删除全部数据.
+
+
+
+
+
+## 4.慢日志处理
+
+```bash
+# 查询慢查询日志功能是否开启
+show variables like 'slow_query_log';
+# 查询慢查询阈值
+show variables like 'long_query_time';
+# 开启慢查询日志功能
+SET GLOBAL slow_query_log = 'ON';
+# 慢查询日志存放位置
+SET GLOBAL slow_query_log_file = '/var/lib/mysql/ranking-list-slow.log';
+# 无论是否超时，未被索引的记录也会记录下来。
+SET GLOBAL log_queries_not_using_indexes = 'ON';
+# 慢查询阈值（秒），SQL 执行超过这个阈值将被记录在日志中。
+SET SESSION long_query_time = 1;
+# 慢查询仅记录扫描行数大于此参数的 SQL
+SET SESSION min_examined_row_limit = 100;
+```
+
