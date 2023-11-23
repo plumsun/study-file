@@ -6,34 +6,27 @@
 
 
 
-## 1.对spring的了解
+## 1.spring概述
 
--   spring是一个开源免费的框架(容器).
--   spring是一个轻量级,非入侵式的框架.
--   控制反转(IOC),面向切面编程(AOP).
--   支持事务处理,对框架整合的支持.
+spring是一个开源免费的框架(容器)，是一个轻量级、非入侵式的框架，支持事务处理，对框架整合的支持.Spring首先它是一个开源而轻量级的框架。其核心容器的主要组件是Bean工厂（BeanFactory）。Bean工厂使用控制反转（IOC）模式来降低程序代码之间的耦合度，并提供了面向切面编程（AOP）的实现。
 
-```
-Spring首先它是一个开源而轻量级的框架。其核心容器的主要组件是Bean工厂（BeanFactory）。Bean工厂使用控制反转（IOC）模式来降低程序代码之间的耦合度，并提供了面向切面编程（AOP）的实现。
-```
+-   控制反转(IOC)，将bean（对象）的创建过程交给spring管理。
 
+-   面向切面编程(AOP)，在不修改源码的情况下对方法进行增强。
 
+#### bean初始化流程
 
-## 3.springbean初始化流程
+-   实例化bean对象(通过构造方法或者工厂方法)
+-   设置对象属性(setter等)（依赖注入）
+-   如果Bean实现了BeanNameAware接口，工厂调用Bean的setBeanName()方法传递Bean的ID。（和下面的一条均属于检查Aware接口）
+-   如果Bean实现了BeanFactoryAware接口，工厂调用setBeanFactory()方法传入工厂自身
+-   将Bean实例传递给Bean的前置处理器的postProcessBeforeInitialization(Object bean, String beanname)方法
+-   调用Bean的初始化方法
+-   将Bean实例传递给Bean的后置处理器的postProcessAfterInitialization(Object bean, String beanname)方法
+-   使用Bean
+-   容器关闭之前，调用Bean的销毁方法
 
-```
-实例化bean对象(通过构造方法或者工厂方法)
-设置对象属性(setter等)（依赖注入）
-如果Bean实现了BeanNameAware接口，工厂调用Bean的setBeanName()方法传递Bean的ID。（和下面的一条均属于检查Aware接口）
-如果Bean实现了BeanFactoryAware接口，工厂调用setBeanFactory()方法传入工厂自身
-将Bean实例传递给Bean的前置处理器的postProcessBeforeInitialization(Object bean, String beanname)方法
-调用Bean的初始化方法
-将Bean实例传递给Bean的后置处理器的postProcessAfterInitialization(Object bean, String beanname)方法
-使用Bean
-容器关闭之前，调用Bean的销毁方法
-```
-
-## 4.springBean的作用域
+#### Bean的作用域
 
 ```properties
 singleton:单例模式
@@ -47,7 +40,7 @@ globalSession:全局作用域，作用于容器整个上下文对象
 
 
 
-## 2.对springIOC和AOP的了解
+## springIOC、AOP
 
 ```markdown
 1. AOP:
@@ -60,16 +53,32 @@ globalSession:全局作用域，作用于容器整个上下文对象
 
 ### IOC
 
-***控制反转:通过spring容器创建bean***
+控制反转，是面向对象设计的一种思想，基于ioc容器完成对象的管理。在spring中ioc的实现是把对象的创建、对象之间的联系、调用交给BeanFactory,ApplicationContent进行管理
 
+**好处**：
 
+-   降低了类与类之间的耦合度。
+-   不需要开发者再显示的维护对象的创建过程。
+
+#### 底层原理
+
+spring中的ioc主要是通过xml文件、工厂设计模式、反射实现。
+
+1.  在bean.xml文件中定义需要使用的bean对象
+2.  在工厂类中解析对应的bean.xml文件，获取定义的对象的字节码文件地址
+3.  通过对象的字节码文件路径获取class对象，创建一个对应的类实例。
+
+SpringIOC针对对象创建有两种方式：
+
+1.  `BeanFactory`，IOC容器的基本实现，是Spring内部使用接口，不建议开发人员使用。采用懒加载思想，在加载xml配置文件时不会创建对象，只有在获取对象或者使用对象时才会动态创建。
+2.  `ApplicationContent`，`BeanFactory`的子接口，提供的api功能比`BeanFactory`更全面，建议开发人员使用。采用饥饿加载，在加载xml配置文件时就会创建对象。
 
 #### 创建bean
 
 ##### 1.构造方法
 
 ```markdown
-class属性指向bean的全限定路径或者实现类的全限定路径，底层通过反射机制,调用对应bean的构造方法创建指定bean
+class属性指向bean的全限定路径或者实现类的全限定路径，底层通过反射机制,调用对应bean的构造方法创建指定bean，默认情况下使用无参构造
 ```
 
 **配置文件**
@@ -189,23 +198,25 @@ bean的销毁需要gc处理,不能手动销毁
 
 
 
-### Spring依赖注入
+### Spring依赖注入 DI
 
 *创建对象的方式都是使用xml配置文件*
 
-#### 1.通过有参构造
+#### 基于配置文件
 
-##### dao层
+##### 1.通过有参构造
+
+**dao层**
 
 ```java
+// dao层
 package com.demo.dao;
 
 public interface UserMapper {
 	
 }
-```
 
-```java
+// dao实现类
 package com.demo.dao.impl;
 
 import com.demo.dao.UserMapper;
@@ -215,35 +226,32 @@ public class UserMapperImpl implements UserMapper {
 }
 ```
 
-##### service层
+**service层**
 
-**Dao层**
+
 
 ```java
 package com.demo.service;
 
-public interface UserServiceDao {
+public interface UserService {
     void getUserService();
     void show();
 
 }
-```
 
-**Impl层**
-
-```java
+// 实现类
 package com.demo.service.impl;
 
-import com.demo.service.UserServiceDao;
+import com.demo.service.UserService;
 
-public class UserServiceDaoImpl implements UserServiceDao {
+public class UserServiceImpl implements UserService {
     private String name;
     //dao层
     private UserMapper userMapper;
 
     
     //有参构造
-    public UserServiceDaoImpl(String name,UserMapper userMapper){
+    public UserServiceImpl(String name,UserMapper userMapper){
         
     }
 
@@ -258,7 +266,7 @@ public class UserServiceDaoImpl implements UserServiceDao {
 
 
 
-##### 配置文件
+**配置文件**
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -268,7 +276,7 @@ public class UserServiceDaoImpl implements UserServiceDao {
 
     <bean id="UserMapper" class="com.demo.dao.impl.UserMapperImpl"/>
     
-    <bean id="UserServiceDao" class="com.demo.service.impl.UserServiceDaoImpl">
+    <bean id="UserService" class="com.demo.service.impl.UserServiceImpl">
         <constructor-arg name="name" value="李四"/>
         <!--指定引用类型属性的值-->
         <constructor-arg name="userMapper" ref="UserMapper"/>
@@ -276,7 +284,7 @@ public class UserServiceDaoImpl implements UserServiceDao {
 </beans>
 ```
 
-#### **测试类**
+**测试类**
 
 ```java
 import com.demo.dao.UserMapper;
@@ -305,19 +313,16 @@ public class MyTest05 {
 
 
 
-### 2.通过set方法
-
-#### service层
-
-**Impl层**
+##### 2.通过set方法
 
 ```java
+// service层实现类
 package com.demo.service.impl;
 
 import com.demo.dao.UserMapper;
 import com.demo.service.UserServiceDao;
 
-public class UserServiceDaoImplSet implements UserServiceDao {
+public class UserServiceImplSet implements UserService {
     private String name;
     private UserMapper userMapper;
 
@@ -329,7 +334,7 @@ public class UserServiceDaoImplSet implements UserServiceDao {
         this.userMapper = userMapper;
     }
 
-    public UserServiceDaoImplSet() {
+    public UserServiceImplSet() {
         System.out.println("对象创建成功");
     }
 
@@ -344,7 +349,7 @@ public class UserServiceDaoImplSet implements UserServiceDao {
 
 
 
-#### 配置文件
+**配置文件**
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -354,7 +359,7 @@ public class UserServiceDaoImplSet implements UserServiceDao {
 
     <bean id="UserMapper" class="com.demo.dao.impl.UserMapperImpl"/>
     
-    <bean id="UserServiceDao" class="com.demo.service.impl.UserServiceDaoImplSet">
+    <bean id="UserServiceDao" class="com.demo.service.impl.UserServiceImplSet">
 		
         <!--
 			name:1.类中有对应属性(set方法名去掉set之后的驼峰名字)
@@ -369,7 +374,7 @@ public class UserServiceDaoImplSet implements UserServiceDao {
 
 
 
-#### **测试类**
+ **测试类**
 
 ```java
 import com.demo.dao.UserMapper;
@@ -396,28 +401,28 @@ public class MyTest05 {
 
 ```
 
-### 简写方式
+**简写方式**
 
 ```xml
-<!-- set方式的依赖注入的简写：p名称空间-->
-    <bean id="userService5" class="com.itheima.service.impl.UserServiceImpl3"
-        p:gameName="坦克大战"
-        p:sex="male"
-        p:userDao-ref="userDao"
-        p:age="8"></bean>
-<!-- 构造方式依赖注入的简写：c名称空间-->
-    <bean id="userService4" class="com.itheima.service.impl.UserServiceImpl2" c:gameName="打豆豆"
-            c:age="16"
-            c:sex="all"
-            c:userDao-ref="userDao"></bean>
+<bean id="UserMapper" class="com.demo.dao.impl.UserMapperImpl"/>
+<!-- set方式的依赖注入的简写：p名称空间，需要创建对应的set 方法，并引入 xmlns:p="http://www.springframework.org/schema/p" -->
+<bean id="UserServiceDao" class="com.demo.service.impl.UserServiceImplSet"
+          p:name="李四"
+          p:userMapper-ref="UserMapper"
+          />
+<!-- 构造方式依赖注入的简写：c名称空间，需要创建有参构造方法 并引入 xmlns:c="http://www.springframework.org/schema/c" -->
+<bean id="UserServiceDao" class="com.demo.service.impl.UserServiceImplSet"
+          c:name="李四"
+          c:userMapper-ref="UserMapper"
+          />
 ```
 
 
 
-### 复杂类型注入
+**复杂类型注入**
 
 ```xml
-<bean id="userService6" class="com.itheima.service.impl.UserServiceImpl4">
+<bean id="userService6" class="com.demo.service.impl.UserServiceImpl4">
     <property name="games">
         <list>
             <value>lol</value>
@@ -442,20 +447,20 @@ public class MyTest05 {
 
 
 
-## JdbcTemplate案例
+##### JdbcTemplate案例
 
-### 案例原型:
+案例原型:
 
-#### web层
+web层
 
 ```java
 public class MyTest{
-    private UserServiceDao service;
+    private UserService service;
     
     @Before
     public void getService(){
         ApplicationContext context = new ClassPathXmlApplicationContext();
-        service = (UserServiceDao) context.getBean("UserServiceDao");
+        service = (UserService) context.getBean("UserService");
     }
     
     @Test
@@ -468,16 +473,13 @@ public class MyTest{
 
 
 
-#### service层
+service层
 
 ```java
-public interface UserServiceDao{
+public interface UserService{
     List<User> findAll();
 }
-```
-
-```java
-public class UserServiceDaoImpl implements UserServiceDao{
+public class UserServiceImpl implements UserService{
     
     private UserMapperDao dao;
     
@@ -494,7 +496,7 @@ public class UserServiceDaoImpl implements UserServiceDao{
 
 
 
-#### dao层
+dao层
 
 ```java
 public interface UserMapperDao{
@@ -513,8 +515,7 @@ public class UserMapperDaoImpl implements UserMapperDao{
     
     @Override
     public List<User> findAll(){
-        return template.query("select * from user",
-                              new BeanPropertyRowMapper<>(User.class));
+        return template.query("select * from user",new BeanPropertyRowMapper<>(User.class));
     }
     
 }
@@ -522,7 +523,7 @@ public class UserMapperDaoImpl implements UserMapperDao{
 
 
 
-#### 配置文件
+配置文件
 
 ```properties
 jdbc.url=jdbc:mysql://localhost:3306/spring01?useUnicode=true&characterEncoding=utf8&useSSL=false
@@ -557,7 +558,7 @@ jdbc.password=root
         <property name="template" ref="template"/>
     </bean>
     
-    <bean id="UserServiceDao" class="com.demo.service.UserServiceDaoImpl">
+    <bean id="UserService" class="com.demo.service.UserServiceImpl">
         <property name="dao" ref="UserMapperDao"/>
     </bean>
     
@@ -566,9 +567,9 @@ jdbc.password=root
 
 
 
-## 基于注解
+#### 基于注解
 
-### 创建对象
+##### 创建对象
 
 ```css
 @Component:	除了3层的对象创建,默认使用类名驼峰形式当做bean的唯一标识
@@ -577,7 +578,7 @@ jdbc.password=root
 @Repository: dao持久层对象创建
 ```
 
-### 依赖注入
+##### 依赖注入
 
 ```css
 @Autowired:自动注入(自动通过属性类型到spring容器中寻找对应bean)
@@ -625,7 +626,7 @@ jdbc.password=root
 
 
 
-# AOP(面向切面编程)
+### AOP(面向切面编程)
 
 概念:通过动态代理在不修改源码的情况下对方法进行增强
 
@@ -697,8 +698,7 @@ weaving织入=增强运用到切入点的过程
 
 
 <hr style="color: red">
-
-# spring事务
+## spring事务
 
 **作用于service层,事务不能管理private方法,因为aop切不到私有方法**
 
@@ -841,4 +841,24 @@ rollbackfor=Exception.class
 2.将spring容器保存到servletContext域对象中
 3.servlet从域对象中获取即可
 ```
+
+
+
+
+
+## spring5新特性
+
+##### 通用日志
+
+spring5默认支持Log4j2日志框架。
+
+##### 支持@Nullable注解
+
+@Nullable 注解可以修饰方法、属性、参数。
+
+-   方法，表示方法的返回值可以为空。
+-   属性，表示当前属性值可以为空。
+-   参数，表示当前方法的参数可以为空。
+
+##### 支持junit5
 
