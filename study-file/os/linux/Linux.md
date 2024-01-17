@@ -211,7 +211,7 @@ firewall-cmd --zone=public --remove-port=9200/tcp --permanent
 firewall-cmd --zone=public --add-port=9876/tcp --permanent
 
 #查询指定端口是否开启成功
-firewall-cmd --query-port=123/tcp
+firewall-cmd --zone=public --query-port=123/tcp
 ```
 
 
