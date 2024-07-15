@@ -1361,6 +1361,175 @@ CSS3 可以通过 `box-sizing` 来指定盒子模型，防止盒子设置了边�
     }
     ```
 
-    
 
-2.  
+
+
+### 2D 转换
+
+transform 转换可以实现元素的位移、旋转、缩放等效果。
+
+`transform-origin`: 设置中心点位置
+
+```css
+test {
+    /* 设置 x y 轴坐标点，可以设置像素、方位名词，默认是 （50% 50%） 元素中心点位置 */
+    transform-origin: 20% 20%;
+}
+```
+
+
+
+#### 移动
+
+translate 使元素沿着X、Y轴移动，不会影响其他元素的位置。
+
+```css
+.test {
+    transform: translate(100px,100px);
+    transform: translateX(100px);
+    transform: translateY(100px);
+}
+```
+
+> translate 中的百分比单位是相对于`自身`元素的百分比。
+>
+> 对行内元素没有效果。
+
+
+
+通过 `转换` 实现水平和垂直居中：
+
+```css
+.div1 {
+    position: relative;
+    height: 500px;
+    width: 500px;
+    background-color: red;
+}
+
+.div2 {
+    /* 通过 tranform 实现水平和垂直居中 */
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    height: 200px;
+    width: 200px;
+}
+```
+
+
+
+#### 旋转
+
+rotate 让元素在二维平面内顺时针或者逆时针旋转，rotate 里面只能跟度数，单位是 deg。
+
+- 角度为正时，顺时针，反之亦然。
+- 默认旋转的中心点是元素的中心点。
+
+```css
+.test {
+    transform: rotate(50deg);
+}
+```
+
+
+
+#### 缩放
+
+scale 让元素放大或者缩小，不会影响其他元素。
+
+- 默认以中心点进行放大或者缩小。
+- 将宽和高设置为目标倍数计算方式：宽 \* 1，高 \* 1。
+- 值没有单位，如果小于1则是缩小，如果大于1则放大（x,y都设置为1相当于不变）。
+
+```css
+.test {
+    transform: scale(x,y);
+    /* 保持原状 */
+    transform: scale(1);
+    /* 宽和高都放大2倍，*2 */
+    transform: scale(2,2);
+    /* 宽和高都缩小 0.2 倍 */
+    transform: scale(0.2,0.2);
+}
+```
+
+
+
+#### 综合写法
+
+顺序：移动 旋转 缩放。
+
+```css
+test{
+	transform: translate(20px,20px) rotate(50deg) scale(2);
+}
+```
+
+> 顺序不对会影响转换的效果，当同时有位移和其他属性的时候，尽量将位移放到最前方。
+
+
+
+
+
+### 动画
+
+`animation` 动画，可以通过设置多个节点来精确控制一个或者一组动画，对比过渡来说，动画可以实现更多变化，更多控制，**连续播放**等等。
+
+可以元素样式`逐渐变化`为新样式的动画效果，可以改变任意多个样式，可以改变多次。
+
+**具体流程**：定义动画 -> 使用动画。
+
+1. 定义动画，使用 `keyframes` 定义动画，类似定义类选择器。
+
+    ```css
+    @keyframes 动画名称 {
+        0%{
+            width: 100px;
+        }
+        100%{        
+            width: 200px;
+        }
+    }
+    ```
+
+    > 0% 和 100% 称为动画序列。
+    >
+    > 0% 是动画的开始，100% 是动画的结尾；也可以使用 from 表示 0%，to 表示100%
+
+2. 使用动画，通过 `animation-name: 动画名称;` 进行调用，通过 `animation-duration: 花费时间;` 控制转变时间区间。
+
+    ```css
+    test {
+    	animation-name: test;
+    	animation-duration: 1s;
+    }
+    ```
+
+#### 常用属性
+
+- @keyframes：定义动画
+- animation：动画属性简写。
+- animation-name：指定动画名称，**必须**。
+- animation-duration：指定动画完成一个周期所需时间，**必须**。
+- animation-timing-function：指定动画速度曲线，默认：`ease`。
+- animation-delay：指定动画何时开始，默认：0。
+- animation-iteration-count：指定动画播放次数，默认：1，还有infinite。
+- animation-direction：指定动画是否在下一周期逆向播放，默认：normal（正常），alternate：逆播放。
+- animation-play-state：指定动画是否正在运行或者暂停，默认：running（运行），pause：暂停。
+- animation-fill-mode：指定动画结束后状态，默认：backwards（回到起始），forwards：保持原状。
+
+> 动画一来一回算播放两次效果。
+
+<img src="./img/image-20240715202249044.png" alt="image-20240715202249044" style="zoom: 80%;" />
+
+动画简写顺序：动画名称 花费时间 运动曲线 何时开始 播放次数 逆播放 结束状态。（不包含 animation-play-state）
+
+```css
+test {
+    /* 除名称和花费时间外都可以省略 */
+    animation: test 1s ease 1s infinite normal running forwards;
+}
+```
+
