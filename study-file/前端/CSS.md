@@ -1514,6 +1514,16 @@ test{
 - animation-name：指定动画名称，**必须**。
 - animation-duration：指定动画完成一个周期所需时间，**必须**。
 - animation-timing-function：指定动画速度曲线，默认：`ease`。
+
+    可以通过 steps 自定义步长，通过指定步长对动画流程完成平均分配。
+
+    ```css
+    test {
+        animation-timing-function: steps(10);
+    }
+    ```
+
+    
 - animation-delay：指定动画何时开始，默认：0。
 - animation-iteration-count：指定动画播放次数，默认：1，还有infinite。
 - animation-direction：指定动画是否在下一周期逆向播放，默认：normal（正常），alternate：逆播放。
@@ -1530,6 +1540,97 @@ test{
 test {
     /* 除名称和花费时间外都可以省略 */
     animation: test 1s ease 1s infinite normal running forwards;
+}
+```
+
+
+
+
+
+### 3D 转换
+
+**web 三维坐标系**
+
+- X轴：水平向右，右边延伸为正，左边为负。
+- Y轴：水平向下，下边延伸为正，上边为负。
+- Z轴：垂直屏幕，往外延伸为正，向里为负。
+
+<img src="./img/image-20240716175813345.png" alt="image-20240716175813345" style="zoom:67%;" />
+
+#### 3D 位移
+
+`translate3d`可以在 2D 移动的基础上多加一个可以移动的方向，就是Z轴方向。
+
+- `translateZ(100px)`：设置元素在Z轴上移动距离。
+- `translate3d(100px,100px,100px)`：设置元素在x,y,z轴上移动的距离。
+
+```css
+test {
+    transform: translateZ(100px);
+    transform: translate3d(100px,100px,100px);
+}
+```
+
+> 设置Z轴移动距离时尽量使用 px 做单位。
+
+#### 3D 旋转
+
+`rotate3d(x,y,z,deg)` 可以让元素在三维平面内沿着x，y，z轴或者自定义轴旋转。
+
+```css
+test {
+	transform: rotateX(45deg);
+	transform: rotateY(45deg);
+	transform: rotateZ(45deg);	
+    /* 沿着x轴旋转45度 */
+	transform: rotate3d(1,0,0,45deg);	
+}
+```
+
+> backface-visibility: hidden; 3D环境下元素背面朝向用户时是不可见的。
+
+#### 透视
+
+`perspective` 在2D平面产生近大远小的视觉效果，单位是 px。
+
+<img src="./img/image-20240716181829835.png" alt="image-20240716181829835" style="zoom: 67%;" />
+
+**透视一般写在被观察元素的父盒子上面**。
+
+- d：表示视距，视距是一个人眼睛到屏幕的距离，视距越大，物体显示效果越小（眼睛离屏幕越远）。
+- z：z轴，物体距离屏幕的距离，z轴值越大，看到的物体就越大。
+
+#### 3D呈现
+
+`transfrom-style` 3D呈现，用来控制**子元素**是否开启三维环境（默认：flat，子元素处于二维平面）。
+
+```css
+test {
+	/* 开启3d环境 */
+	transform-style: preserve-3d;
+}
+```
+
+
+
+
+
+### 私有前缀
+
+主要是为了兼容老版本的浏览器。
+
+- -moz-：为了适配火狐浏览器。
+- -ms-：为了适配IE浏览器。
+- -webkit-：为了适配苹果、谷歌浏览器。
+- -o-：为了适配Opera浏览器。
+
+```css
+test {
+	-moz-transform-style: preserve-3d;
+    -ms-transform-style: preserve-3d;
+    -webkit-transform-style: preserve-3d;
+    -o-transform-style: preserve-3d;
+    transform-style: preserve-3d;
 }
 ```
 
