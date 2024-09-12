@@ -41,6 +41,12 @@ usr
 
 ## 2.网关配置
 
+#### 网络连接模式
+
+- 桥接模式：直接连接物理网络
+- Nat 模式：共享主机的 ip 地址
+- 仅主机模式：与主机共享的专用网络
+
 ## 3.系统服务
 
 服务命令（Centeos 7之后）
@@ -199,7 +205,7 @@ systemctl enable firewalld.service
 firewall-cmd --state
 
 #重新载入配置，比如添加规则之后，需要执行此命令
-firewall-cmd --reload                        
+firewall-cmd --reload
 
 #centos7查看防火墙开放的端口信息
 firewall-cmd --list-ports
