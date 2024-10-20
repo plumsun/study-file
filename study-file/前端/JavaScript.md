@@ -404,9 +404,24 @@ btn.onclick = function() {
 - 右键菜单 contentmenu
 - 选中文字 selectstart
 
+
+
+> mouseover 和 mouseenter 的区别？
+>
+> - mouseover 除了经过本身元素之外，假如经过子元素也会被触发
+> - mouseenter 只有经过本身元素才会触发，原因：mouseenter 事件没有冒泡阶段。
+
+
+
 鼠标事件对象 MouseEvent，常用属性和方法：
 
 <img src="./img/image-20240823194345992.png" alt="image-20240823194345992" style="zoom:80%;" />
+
+
+
+
+
+
 
 ###### 键盘事件
 
@@ -659,7 +674,7 @@ window 对象是浏览器的顶级对象，具有双重角色。
 
 #### 定时器
 
-- `setTimeout(function,延迟时间)`，用于设置一个定时器，当指定延迟时间达到后，就会执行传入的函数。时间单位：ms.
+- `setTimeout(function,延迟时间)`，用于设置一个定时器，**只会执行一次**，当指定延迟时间达到后，就会执行传入的函数。时间单位：ms.
 
     ```js
     setTimeout(function(){},1000);
@@ -667,7 +682,7 @@ window 对象是浏览器的顶级对象，具有双重角色。
 
     - window.clearTimeout(timeoutID)：停止定时器
 
-- `setInterval(function,延迟时间)`，设置一个定时器，每隔一段时间重复调用函数。时间单位：ms.
+- `setInterval(function,延迟时间)`，设置一个定时器，**会循环执行对应的函数**，每隔一段时间重复调用函数。时间单位：ms.
 
     ```js
     setInterval(function(){},1000);
@@ -773,5 +788,215 @@ history 对象可以与浏览器历史记录进行交互。
 
 
 
-### 元素偏移量
+### offset 元素偏移量
+
+offset 偏移量，使用 js 提供的 offset 系列相关属性可以动态获取该元素的位置（偏移）、大小等。（注意：不会反悔数值单位）
+
+- 可以获取元素距离带有**定位父元素**的位置
+- 获取元素自身的大小
+
+**常用属性**
+
+| 属性名称             | 作用                                                         |
+| -------------------- | ------------------------------------------------------------ |
+| element.offsetParent | 返回该元素所在带有定位属性的父级元素，如没有则返回 body      |
+| element.offsetTop    | 返回元素相对带有定位父元素上方的偏移量                       |
+| element.offsetLeft   | 返回元素相对带有定位父元素左边的偏移量                       |
+| element.offsetWidth  | 返回元素自身包括 padding、边框、内容区的宽度，返回数值不带单位 |
+| element.offsetHeight | 返回元素自身包括 padding、边框、内容区的高度，返回数值不带单位 |
+
+
+
+### client 元素可视区
+
+client 属性可以动态获取元素的边框大小、元素大小等等。
+
+**常用属性**
+
+| 属性名称             | 作用                                                         |
+| -------------------- | ------------------------------------------------------------ |
+| element.clientTop    | 返回元素上边框大小                                           |
+| element.clientLeft   | 返回元素左边框大小                                           |
+| element.clientHeight | 返回元素自身包括 padding、内容区的高度，不包含边框，返回数值不带单位 |
+| element.clientWidth  | 返回元素自身包括 padding、内容区的宽度，不包含边框，返回数值不带单位 |
+
+
+
+
+
+### 立即执行函数
+
+字面含义，不需要调用，立马执行。通常用来创建一个独立的作用域。
+
+会有两个独立的 `()`，第一个通常用来声明函数，第二个用来调用参数，并且如果函数带有形参也可以进行参数传递。
+
+**常见写法**
+
+1. `(function(){})()` 
+
+    ```js
+    // 1
+    (function(){
+    	console.log("123");
+    })
+    ()
+    // 2
+    (function(a,b){
+    	console.log(a+b);
+    })
+    (1,2)
+    ```
+
+    
+
+2. `(function(){}())`
+
+    ```js
+    // 1
+    (function(){
+    	console.log("123");
+    }())
+    // 2
+    (function(a,b){
+    	console.log(a + b);
+    }(1,2))
+    ```
+
+**好处**
+
+- 函数中所有变量都是局部变量，当函数执行完毕就会被回收
+- 可以存在多个立即执行函数，里面存在的变量不会出现冲突
+
+
+
+
+
+### scroll 元素滚动
+
+通过 scroll 可以动态获取相关元素的大小、滚动距离等等。
+
+**常用属性**
+
+| 属性名称             | 作用                                               |
+| -------------------- | -------------------------------------------------- |
+| element.scrollTop    | 返回被卷去的上侧距离，返回数值不带单位             |
+| element.scrollLeft   | 返回被卷去的左侧距离，返回数值不带单位             |
+| element.scrollHeight | 返回元素自身实际高度，不包含边框，返回数值不带单位 |
+| element.scrollWidth  | 返回元素自身实际宽度，不包含边框，返回数值不带单位 |
+
+
+
+### 动画实现原理
+
+动画本身是通过**定时器** `setInterval()` 来不断移动盒子位置实现的。（当前元素要添加定位）
+
+**简单流程**
+
+1. 获取当前盒子位置
+2. 让盒子在当前位置上加一个**移动距离**
+3. 通过定时器重复上述步骤
+4. 添加定时器结束事件
+
+#### 封装动画函数
+
+**具体流程**
+
+1. 定义动画函数
+2. 在函数中定义定时器
+3. 设置定时停止条件
+4. 调用函数
+
+```js
+// 封装动画函数
+function animation(domObj, target, offset, timeout) {
+    // 首先清除定时器，防止在 domObj 中存在多个定时器
+    clearInterval(domObj.timer);
+    // 设置定时器，并将其赋值给 domObj.timer 属性
+    domObj.timer = setInterval(function () {
+        if (domObj.offsetLeft >= target) {
+            // 停止定时器，停止动画
+            clearInterval(domObj.timer);
+        }
+        domObj.style.left = domObj.offsetLeft + offset + "px";
+    }, timeout);
+}
+
+let divElement = document.querySelector("div");
+let spanElement = document.querySelector("span");
+animation(divElement, 300, 2, 15);
+animation(spanElement, 200, 5, 15);
+```
+
+#### 缓动动画原理
+
+缓动动画就是让元素运动速度有所变化，最常见的就是让速度递减。
+
+**简单流程**
+
+1. 让盒子每次移动的距离慢慢减小，速度就会随之降下来
+2. 核心算法：`（目标值 - 现在的位置）/ 10` 做为每次移动距离步长
+3. 停止条件：当前盒子位置等于目标位置
+
+```js
+// 封装动画函数
+function animation(domObj, target, timeout) {
+    // 首先清除定时器，防止在 domObj 中存在多个定时器
+    clearInterval(domObj.timer);
+
+    let number = (target - domObj.offsetLeft) / 10;
+    number = number > 0 ? Math.ceil(number) : Math.floor(number);
+
+    // 设置定时器，并将其赋值给 domObj.timer 属性
+    domObj.timer = setInterval(function () {
+        if (domObj.offsetLeft === target) {
+            // 停止定时器，停止动画
+            clearInterval(domObj.timer);
+        }
+        domObj.style.left = domObj.offsetLeft + number + "px";
+    }, timeout);
+}
+
+let divElement = document.querySelector("div");
+let spanElement = document.querySelector("span");
+animation(divElement, 300, 15);
+animation(spanElement, 200, 15);
+```
+
+
+
+**添加回调函数**
+
+```js
+// 封装动画函数
+function animation(domObj, target, timeout, callback) {
+    // 首先清除定时器，防止在 domObj 中存在多个定时器
+    clearInterval(domObj.timer);
+
+    let number = (target - domObj.offsetLeft) / 10;
+    number = number > 0 ? Math.ceil(number) : Math.floor(number);
+
+    // 设置定时器，并将其赋值给 domObj.timer 属性
+    domObj.timer = setInterval(function () {
+        if (domObj.offsetLeft === target) {
+            // 停止定时器，停止动画
+            clearInterval(domObj.timer);
+            // 添加回调
+            if (callback) {
+                callback(domObj);
+            }
+        }
+        domObj.style.left = domObj.offsetLeft + number + "px";
+    }, timeout);
+}
+
+function callback(obj) {
+    obj.style.left = "0px";
+}
+
+
+let divElement = document.querySelector("div");
+let spanElement = document.querySelector("span");
+animation(divElement, 300, 15, callback);
+animation(spanElement, 200, 15, callback);
+```
 

@@ -1,3 +1,176 @@
+# Redis
+
+## 数据结构
+
+<img src="./img/image-20240921093954340.png" alt="image-20240921093954340" style="zoom: 67%;" /><img src="./img/image-20240921094218638.png" alt="image-20240921094218638" style="zoom: 67%;" />
+
+Redis这样设计有两个好处：
+
+- 第一，可以改进内部编码，而对外的数据结构和命令没有影响，这样一旦开发出更优秀的内部编码，无需改动外部数据结构和命令
+- 第二，多种内部编码实现可以在不同场景下发挥各自的优势，例如`ziplist`比较节省内存，但是在列表元素比较多的情况下，性能会有所下降，这时候Redis会根据配置选项将列表类型的内部实现转换为`linkedlist`。
+
+#### 字符串
+
+使用场景
+
+1. 缓存
+2. 计数
+3. 分布式 Session
+4. 限速
+
+
+
+#### list 列表
+
+- lpush+lpop=Stack（栈）
+- lpush+rpop=Queue（队列）
+- lpsh+ltrim=Capped Collection（有限集合）
+- `lpush+brpop`/ `rpush+lrpop` =Message Queue（消息队列）
+
+> blpop brpop 均为阻塞操作
+
+#### 哈希
+
+#### Set 集合
+
+##### 应用场景
+
+集合类型比较典型的使用场景是标签（tag）。模拟：
+
+（1）给用户添加标签
+
+```lua
+sadd user:1:tags tag1 tag2 tag5
+sadd user:2:tags tag2 tag3 tag5
+...
+sadd user:k:tags tag1 tag2 tag4
+```
+
+（2）给标签添加用户
+
+```lua
+sadd tag1:users user:1 user:3
+sadd tag2:users user:1 user:2 user:3
+...
+sadd tagk:users user:1 user:2
+```
+
+> 用户和标签的关系维护应该在一个事务内执行，防止部分命令失败造成的数据不一致
+
+
+
+（3）删除用户下的标签
+
+```lua
+srem user:1:tags tag1 tag5
+...
+```
+
+（4）删除标签下的用户
+
+```lua
+srem tag1:users user:1
+srem tag5:users user:1
+...
+```
+
+（3）和（4）也是尽量放在一个事务执行。
+
+（5）计算用户共同感兴趣的标签
+
+可以使用sinter命令，来计算用户共同感兴趣的标签，如下代码所示：
+
+```lua
+sinter user:1:tags user:2:tags
+```
+
+集合类型的应用场景通常为以下几种：
+
+- sadd=Tagging（标签）
+- spop/srandmember=Random item（生成随机数，比如抽奖）
+- sadd+sinter=Social Graph（社交需求
+
+#### Zset 有序集合
+
+##### 应用场景
+
+有序集合比较典型的使用场景就是排行榜系统。举例：统计点赞数这个维度，实现排行榜。主要需要实现以下4个功能。
+
+（1）添加用户赞数
+
+例如用户mike上传了一个视频，并获得了3个赞，可以使用有序集合的zadd和zincrby功能：
+
+```lua
+zadd user:ranking:2016_03_15 3 mike
+```
+
+如果之后再获得一个赞，可以使用zincrby：
+
+```lua
+zincrby user:ranking:2016_03_15 1 mike
+```
+
+（2）取消用户赞数
+
+由于各种原因（例如用户注销、用户作弊）需要将用户删除，此时需要将用户从榜单中删除掉，可以使用zrem。例如删除成员mike：
+
+```lua
+zrem user:ranking:2016_03_15 mike
+```
+
+（3）展示获取赞数最多的十个用户
+
+此功能使用zrevrange命令实现：
+
+```lua
+zrevrangebyscore user:ranking:2016_03_15 9 0
+```
+
+> zrangebyscore key min max [WITHSCORES] [LIMIT offset count]按照分数从低到高返回
+>
+> zrevrangebyscore key max min [WITHSCORES] [LIMIT offset count] 按照分数从高到低返回
+
+（4）展示用户信息以及用户分数
+
+此功能将用户名作为键后缀，将用户信息保存在哈希类型中，至于用户的分数和排名可以使用zscore和zrank两个功能：
+
+```lua
+hgetall user:info:tom
+zscore user:ranking:2016_03_15 mike
+zrank user:ranking:2016_03_15 mike
+```
+
+
+
+
+
+### 关系型数据库记录缓存方案
+
+- **数据分散且字段较多**：推荐使用 Hash 结构，将每个用户或每个对象作为一个哈希存储。
+
+- **需要排序或排名**：使用 Sorted Set 存储，并根据不同维度设置不同的 score。
+
+- **数据量较大且相对静态**：可以采用 String 结构，结合数据压缩技术（如 gzip）减少存储空间。
+
+    > 查询数据的性能瓶颈在于序列化或者解压缩
+
+## 架构
+
+Redis使用了单线程架构和I/O多路复用模型来实现高性能的内存数据库服务
+
+
+
+### 为什么单线程还能这么快
+
+- 纯内存访问，Redis将所有数据放在内存中，内存的响应时长大约为100纳秒，这是Redis达到每秒万级别访问的重要基础。
+- 非阻塞I/O，Redis使用epoll作为I/O多路复用技术的实现，再加上Redis自身的事件处理模型将epoll中的连接、读写、关闭都转换为事件，不
+    在网络I/O上浪费过多的时间
+- 单线程避免了线程切换和竞态产生的消耗
+    - 单线程可以简化数据结构和算法的实现。并发数据结构实现不但困难而且开发测试比较麻烦。
+    - 单线程避免了线程切换和竞态产生的消耗，对于服务端开发来说，锁和线程切换通常是性能杀手
+
+
+
 ## 性能优化
 
 
